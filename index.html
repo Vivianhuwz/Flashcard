@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浅紫浅蓝主题多语言英文闪卡</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        /* 核心主题配色：柔和浅紫色 + 清新浅蓝色 + 奶白色背景 */
+        :root {
+            --light-purple: #9F7AEA;
+            --light-blue: #63B3ED;
+            --milk-white: #F9FAFB;
+            --pure-white: #FFFFFF;
+            --dark-text: #2D3748;
+            --light-text: #718096;
+            --heart-red: #E53E3E;
+        }
+
+        body {
+            background-color: var(--milk-white);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--light-purple);
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        /* 上传区域 */
+        .upload-box {
+            background: var(--pure-white);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(159, 122, 234, 0.06);
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid rgba(159, 122, 234, 0.1);
+        }
+
+        .upload-box p {
+            color: var(--light-text);
+            margin-bottom: 15px;
+        }
+
+        #fileInput {
+            padding: 8px;
+            border: 1px solid rgba(159, 122, 234, 0.2);
+            border-radius: 6px;
+            margin-right: 10px;
+            background-color: var(--milk-white);
+        }
+
+        button {
+            padding: 8px 16px;
+            background: var(--light-purple);
+            color: var(--pure-white);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background: var(--light-blue);
+        }
+
+        /* 模式切换区域 */
+        .mode-switch {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-switch button {
+            background: var(--milk-white);
+            color: var(--dark-text);
+            border: 1px solid rgba(159, 122, 234, 0.2);
+        }
+
+        .mode-switch button.active {
+            background: var(--light-purple);
+            color: var(--pure-white);
+        }
+
+        /* 卡片样式 */
+        .card {
+            width: 100%;
+            height: 320px;
+            perspective: 1000px;
+            margin: 20px 0;
+            cursor: pointer;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 20px rgba(159, 122, 234, 0.08);
+            border-radius: 16px;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card-front {
+            background-color: var(--pure-white);
+            color: var(--dark-text);
+            border: 1px solid rgba(159, 122, 234, 0.1);
+        }
+
+        .card-back {
+            background-color: var(--light-purple);
+            color: var(--pure-white);
+            transform: rotateY(180deg);
+            gap: 25px;
+        }
+
+        .word {
+            font-size: 38px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s ease;
+        }
+
+        .word:hover {
+            color: var(--light-purple);
+        }
+
+        .translation-block {
+            text-align: center;
+            width: 100%;
+        }
+
+        .translation-label {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .translation {
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .translation:hover {
+            opacity: 0.8;
+        }
+
+        /* 爱心收藏按钮 */
+        .heart-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s ease;
+            color: var(--light-text);
+            z-index: 10;
+        }
+
+        .heart-btn:hover {
+            color: var(--heart-red);
+        }
+
+        .heart-btn.active {
+            color: var(--heart-red);
+        }
+
+        /* 控制按钮 */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .tip {
+            text-align: center;
+            color: var(--light-text);
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+    <!-- 引入SheetJS库解析Excel文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>📇 多语言英文闪卡记忆工具</h1>
+
+        <!-- 上传区域 -->
+        <div class="upload-box">
+            <p>支持导入 CSV / Excel（.xlsx/.xls）<br>格式要求：第二列=英文，第三列=中文翻译，第四列=葡萄牙语翻译</p>
+            <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
+            <button onclick="importFile()">导入单词表</button>
+        </div>
+
+        <!-- 模式切换按钮 -->
+        <div class="mode-switch">
+            <button id="allModeBtn" class="active" onclick="switchMode('all')">全部单词</button>
+            <button id="reviewModeBtn" onclick="switchMode('review')">复习收藏</button>
+        </div>
+
+        <!-- 闪卡 -->
+        <div class="card" id="flashCard" onclick="flipCard()">
+            <!-- 爱心收藏图标 -->
+            <div class="heart-btn" id="heartIcon" onclick="toggleFavorite(event)">♡</div>
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="word" id="word" onclick="playPronunciation(event, 'en')">hello</div>
+                </div>
+                <div class="card-back">
+                    <div class="translation-block">
+                        <div class="translation-label">中文翻译</div>
+                        <!-- 给中文翻译添加点击事件 -->
+                        <div class="translation" id="cnTranslation" onclick="playPronunciation(event, 'cn')">你好</div>
+                    </div>
+                    <div class="translation-block">
+                        <div class="translation-label">葡萄牙语翻译</div>
+                        <div class="translation" id="ptTranslation" onclick="playPronunciation(event, 'pt')">olá</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 控制按钮 -->
+        <div class="controls">
+            <button onclick="prevCard()">上一张</button>
+            <button onclick="nextCard()">下一张</button>
+        </div>
+
+        <!-- 更新提示文本 -->
+        <p class="tip">💡 点击卡片翻面 | 点击英文播放美式发音 | 点击中文播放普通话发音 | 点击葡萄牙语播放本土发音 | ❤️ 点击爱心收藏单词用于复习</p>
+    </div>
+
+    <script>
+        // 单词数据 & 索引
+        let wordList = [
+            { en: "hello", cn: "你好", pt: "olá", favorite: false },
+            { en: "study", cn: "学习", pt: "estudar", favorite: false },
+            { en: "family", cn: "家庭", pt: "família", favorite: false }
+        ];
+        let currentIndex = 0;
+        let currentMode = 'all'; // all: 全部单词, review: 复习收藏
+        let reviewList = []; // 收藏的复习单词列表
+
+        // 页面加载显示第一张卡片
+        window.onload = function() {
+            updateReviewList();
+            renderCard();
+        };
+
+        // 渲染当前卡片（无音标）
+        function renderCard() {
+            // 根据当前模式获取对应的单词列表
+            const displayList = currentMode === 'all' ? wordList : reviewList;
+            
+            // 如果复习列表为空，提示用户
+            if (displayList.length === 0) {
+                document.getElementById("word").innerText = "暂无收藏";
+                document.getElementById("cnTranslation").innerText = "请先收藏单词";
+                document.getElementById("ptTranslation").innerText = "Nenhuma palavra favorita";
+                document.getElementById("heartIcon").style.display = 'none';
+                return;
+            }
+            
+            document.getElementById("heartIcon").style.display = 'block';
+            const currentWord = displayList[currentIndex];
+            
+            document.getElementById("word").innerText = currentWord.en;
+            document.getElementById("cnTranslation").innerText = currentWord.cn;
+            document.getElementById("ptTranslation").innerText = currentWord.pt;
+            document.getElementById("flashCard").classList.remove("flipped");
+            
+            // 更新爱心图标状态
+            updateHeartIcon(currentWord);
+        }
+
+        // 更新爱心图标显示状态
+        function updateHeartIcon(word) {
+            const heartIcon = document.getElementById("heartIcon");
+            if (word.favorite) {
+                heartIcon.innerText = '❤️';
+                heartIcon.classList.add('active');
+            } else {
+                heartIcon.innerText = '♡';
+                heartIcon.classList.remove('active');
+            }
+        }
+
+        // 切换收藏状态
+        function toggleFavorite(e) {
+            e.stopPropagation(); // 防止触发翻面
+            
+            const displayList = currentMode === 'all' ? wordList : reviewList;
+            if (displayList.length === 0) return;
+            
+            const currentWord = displayList[currentIndex];
+            currentWord.favorite = !currentWord.favorite;
+            
+            // 更新总列表中的收藏状态（处理复习模式下的修改）
+            if (currentMode === 'review') {
+                const indexInMainList = wordList.findIndex(item => item.en === currentWord.en);
+                if (indexInMainList !== -1) {
+                    wordList[indexInMainList].favorite = currentWord.favorite;
+                }
+            }
+            
+            // 更新复习列表并重新渲染
+            updateReviewList();
+            updateHeartIcon(currentWord);
+            
+            // 提示信息
+            const message = currentWord.favorite ? 
+                `已收藏「${currentWord.en}」到复习列表` : 
+                `已取消收藏「${currentWord.en}」`;
+            alert(message);
+            
+            // 如果在复习模式下取消收藏，重新渲染卡片
+            if (currentMode === 'review' && !currentWord.favorite) {
+                renderCard();
+            }
+        }
+
+        // 更新复习列表
+        function updateReviewList() {
+            reviewList = wordList.filter(word => word.favorite);
+        }
+
+        // 切换模式（全部/复习）
+        function switchMode(mode) {
+            currentMode = mode;
+            currentIndex = 0; // 重置索引
+            
+            // 更新模式按钮样式
+            document.getElementById("allModeBtn").classList.toggle("active", mode === 'all');
+            document.getElementById("reviewModeBtn").classList.toggle("active", mode === 'review');
+            
+            // 重新渲染卡片
+            renderCard();
+        }
+
+        // 翻面卡片
+        function flipCard() {
+            document.getElementById("flashCard").classList.toggle("flipped");
+        }
+
+        // 播放发音（支持英文/中文/葡萄牙语）
+        function playPronunciation(e, lang) {
+            e.stopPropagation(); // 防止触发翻面
+            
+            const displayList = currentMode === 'all' ? wordList : reviewList;
+            if (displayList.length === 0) return;
+            
+            let text, langCode;
+            
+            if (lang === 'en') {
+                text = document.getElementById("word").innerText;
+                langCode = "en-US"; // 美式发音
+            } else if (lang === 'cn') {
+                text = document.getElementById("cnTranslation").innerText;
+                langCode = "zh-CN"; // 中文普通话
+            } else if (lang === 'pt') {
+                text = document.getElementById("ptTranslation").innerText;
+                langCode = "pt-BR"; // 巴西葡萄牙语本土发音
+            }
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = langCode;
+            utterance.rate = 0.9; // 语速
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // 上一张 / 下一张
+        function prevCard() {
+            const displayList = currentMode === 'all' ? wordList : reviewList;
+            if (displayList.length === 0) return;
+            
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderCard();
+            }
+        }
+
+        function nextCard() {
+            const displayList = currentMode === 'all' ? wordList : reviewList;
+            if (displayList.length === 0) return;
+            
+            if (currentIndex < displayList.length - 1) {
+                currentIndex++;
+                renderCard();
+            }
+        }
+
+        // 导入 CSV / Excel 文件（适配多列格式）
+        function importFile() {
+            const fileInput = document.getElementById("fileInput");
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("请先选择文件！");
+                return;
+            }
+
+            // 判断文件类型
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            
+            // 处理Excel文件 (.xlsx/.xls)
+            if (fileExt === 'xlsx' || fileExt === 'xls') {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        // 解析Excel文件
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        // 获取第一个工作表
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        
+                        // 转换为数组格式（忽略表头）
+                        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        const newWords = [];
+
+                        for (let row of rows) {
+                            if (!row || row.length < 4) continue; // 确保至少4列
+                            
+                            // 第二列=英文(row[1])、第三列=中文(row[2])、第四列=葡萄牙语(row[3])
+                            const en = (row[1] || '').toString().trim();
+                            const cn = (row[2] || '').toString().trim();
+                            const pt = (row[3] || '').toString().trim();
+                            
+                            if (en && cn && pt) {
+                                newWords.push({ en, cn, pt, favorite: false });
+                            }
+                        }
+
+                        if (newWords.length > 0) {
+                            wordList = newWords;
+                            currentIndex = 0;
+                            updateReviewList();
+                            renderCard();
+                            alert(`Excel导入成功！共 ${newWords.length} 个单词`);
+                        } else {
+                            alert("Excel文件中未识别到有效单词，请检查文件格式！\n要求：第二列=英文、第三列=中文、第四列=葡萄牙语");
+                        }
+                    } catch (err) {
+                        alert("Excel文件解析失败，请确保文件格式正确");
+                        console.error(err);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } 
+            // 处理CSV文件
+            else if (fileExt === 'csv') {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const text = e.target.result;
+                        const rows = text.split(/\r?\n/); // 按行拆分
+                        const newWords = [];
+
+                        for (let row of rows) {
+                            if (!row.trim()) continue;
+                            
+                            // 支持逗号/制表符分隔，兼容Excel导出的CSV
+                            const cols = row.split(/[,|\t]/).map(item => item.trim().replace(/"/g, ''));
+                            // 第二列=英文(cols[1])、第三列=中文(cols[2])、第四列=葡萄牙语(cols[3])
+                            if (cols.length >= 4 && cols[1] && cols[2] && cols[3]) {
+                                newWords.push({ 
+                                    en: cols[1], 
+                                    cn: cols[2], 
+                                    pt: cols[3],
+                                    favorite: false 
+                                });
+                            }
+                        }
+
+                        if (newWords.length > 0) {
+                            wordList = newWords;
+                            currentIndex = 0;
+                            updateReviewList();
+                            renderCard();
+                            alert(`CSV导入成功！共 ${newWords.length} 个单词`);
+                        } else {
+                            alert("CSV文件中未识别到有效单词，请检查文件格式！\n要求：第二列=英文、第三列=中文、第四列=葡萄牙语");
+                        }
+                    } catch (err) {
+                        alert("CSV文件解析失败，请确保是标准 CSV 格式");
+                        console.error(err);
+                    }
+                };
+                reader.readAsText(file, "UTF-8");
+            } 
+            // 不支持的文件类型
+            else {
+                alert("不支持的文件格式！请选择.csv、.xlsx或.xls文件");
+            }
+        }
+    </script>
+</body>
+</html>
