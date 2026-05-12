@@ -15,7 +15,7 @@
         /* 核心主题配色：柔和浅紫色 + 清新浅蓝色 + 奶白色背景 */
         :root {
             --light-purple: #9F7AEA;
-            --light-blue: #63B3ED;
+            --light-blue: #8EC9FF;
             --milk-white: #F9FAFB;
             --pure-white: #FFFFFF;
             --dark-text: #2D3748;
@@ -49,14 +49,15 @@
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(159, 122, 234, 0.06);
-            margin-bottom: 30px;
+            margin-top: 30px;
             text-align: center;
             border: 1px solid rgba(159, 122, 234, 0.1);
         }
 
         .upload-box p {
             color: var(--light-text);
-            margin-bottom: 15px;
+            margin-top: 15px;
+            margin-bottom: 0;
         }
 
         #fileInput {
@@ -82,21 +83,13 @@
             background: var(--light-blue);
         }
 
-        /* 模式切换区域 */
-        .mode-switch {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .mode-switch button {
+        .mode-btn {
             background: var(--milk-white);
             color: var(--dark-text);
             border: 1px solid rgba(159, 122, 234, 0.2);
         }
 
-        .mode-switch button.active {
+        .mode-btn.active {
             background: var(--light-purple);
             color: var(--pure-white);
         }
@@ -162,6 +155,22 @@
             color: var(--light-purple);
         }
 
+        .ipa {
+            margin-top: 10px;
+            font-size: 18px;
+            color: var(--light-text);
+            letter-spacing: 0.2px;
+        }
+
+        .example {
+            margin-top: 10px;
+            font-size: 16px;
+            opacity: 0.9;
+            color: var(--light-text);
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
         .translation-block {
             text-align: center;
             width: 100%;
@@ -210,6 +219,7 @@
         .controls {
             display: flex;
             justify-content: center;
+            align-items: center;
             gap: 15px;
             margin-top: 20px;
         }
@@ -220,6 +230,13 @@
             font-size: 14px;
             margin-top: 10px;
         }
+
+        .progress {
+            text-align: center;
+            color: var(--light-text);
+            font-size: 14px;
+            margin-top: 12px;
+        }
     </style>
     <!-- 引入SheetJS库解析Excel文件 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -228,19 +245,6 @@
     <div class="container">
         <h1>📇 多语言英文闪卡记忆工具</h1>
 
-        <!-- 上传区域 -->
-        <div class="upload-box">
-            <p>支持导入 CSV / Excel（.xlsx/.xls）<br>格式要求：第二列=英文，第三列=中文翻译，第四列=葡萄牙语翻译</p>
-            <input type="file" id="fileInput" accept=".csv,.xlsx,.xls">
-            <button onclick="importFile()">导入单词表</button>
-        </div>
-
-        <!-- 模式切换按钮 -->
-        <div class="mode-switch">
-            <button id="allModeBtn" class="active" onclick="switchMode('all')">全部单词</button>
-            <button id="reviewModeBtn" onclick="switchMode('review')">复习收藏</button>
-        </div>
-
         <!-- 闪卡 -->
         <div class="card" id="flashCard" onclick="flipCard()">
             <!-- 爱心收藏图标 -->
@@ -248,6 +252,8 @@
             <div class="card-inner">
                 <div class="card-front">
                     <div class="word" id="word" onclick="playPronunciation(event, 'en')">hello</div>
+                    <div class="ipa" id="ipa"></div>
+                    <div class="example" id="exampleSentence"></div>
                 </div>
                 <div class="card-back">
                     <div class="translation-block">
@@ -265,24 +271,37 @@
 
         <!-- 控制按钮 -->
         <div class="controls">
+            <button id="allModeBtn" class="mode-btn active" onclick="switchMode('all')">全部单词</button>
             <button onclick="prevCard()">上一张</button>
             <button onclick="nextCard()">下一张</button>
+            <button id="reviewModeBtn" class="mode-btn" onclick="switchMode('review')">复习收藏</button>
         </div>
+
+        <p class="progress" id="progress"></p>
 
         <!-- 更新提示文本 -->
         <p class="tip">💡 点击卡片翻面 | 点击英文播放美式发音 | 点击中文播放普通话发音 | 点击葡萄牙语播放本土发音 | ❤️ 点击爱心收藏单词用于复习</p>
+
+        <!-- 上传区域 -->
+        <div class="upload-box">
+            <input type="file" id="fileInput" accept=".csv,.txt,.xlsx,.xls">
+            <button onclick="importFile()">导入单词表</button>
+            <p>支持导入 CSV / TXT / Excel（.xlsx/.xls）<br>支持格式：英文 | 音标 | 中文翻译 | 葡萄牙语翻译 | 例句<br>或表格列：第2列英文，第3列中文，第4列葡萄牙语（第5列音标，第6列例句可选）</p>
+        </div>
     </div>
 
     <script>
         // 单词数据 & 索引
         let wordList = [
-            { en: "hello", cn: "你好", pt: "olá", favorite: false },
-            { en: "study", cn: "学习", pt: "estudar", favorite: false },
-            { en: "family", cn: "家庭", pt: "família", favorite: false }
+            { en: "hello", ipa: "/həˈloʊ/", cn: "你好", pt: "olá", example: "Olá! Como você está?", favorite: false },
+            { en: "study", ipa: "/ˈstʌdi/", cn: "学习", pt: "estudar", example: "Eu preciso estudar hoje.", favorite: false },
+            { en: "family", ipa: "/ˈfæməli/", cn: "家庭", pt: "família", example: "Minha família mora aqui.", favorite: false }
         ];
         let currentIndex = 0;
         let currentMode = 'all'; // all: 全部单词, review: 复习收藏
         let reviewList = []; // 收藏的复习单词列表
+        let viewedAllWords = new Set();
+        let viewedReviewWords = new Set();
 
         // 页面加载显示第一张卡片
         window.onload = function() {
@@ -298,9 +317,12 @@
             // 如果复习列表为空，提示用户
             if (displayList.length === 0) {
                 document.getElementById("word").innerText = "暂无收藏";
+                document.getElementById("ipa").innerText = "";
                 document.getElementById("cnTranslation").innerText = "请先收藏单词";
                 document.getElementById("ptTranslation").innerText = "Nenhuma palavra favorita";
+                document.getElementById("exampleSentence").innerText = "";
                 document.getElementById("heartIcon").style.display = 'none';
+                updateProgress();
                 return;
             }
             
@@ -308,12 +330,28 @@
             const currentWord = displayList[currentIndex];
             
             document.getElementById("word").innerText = currentWord.en;
+            document.getElementById("ipa").innerText = (currentWord.ipa || "").trim();
             document.getElementById("cnTranslation").innerText = currentWord.cn;
             document.getElementById("ptTranslation").innerText = currentWord.pt;
+            document.getElementById("exampleSentence").innerText = (currentWord.example || "").trim();
             document.getElementById("flashCard").classList.remove("flipped");
+
+            if (currentMode === 'all') {
+                viewedAllWords.add(currentWord.en);
+            } else {
+                viewedReviewWords.add(currentWord.en);
+            }
+            updateProgress();
             
             // 更新爱心图标状态
             updateHeartIcon(currentWord);
+        }
+
+        function updateProgress() {
+            const displayList = currentMode === 'all' ? wordList : reviewList;
+            const viewedCount = currentMode === 'all' ? viewedAllWords.size : viewedReviewWords.size;
+            const total = displayList.length;
+            document.getElementById("progress").innerText = `已查看：${Math.min(viewedCount, total)} / ${total}`;
         }
 
         // 更新爱心图标显示状态
@@ -432,6 +470,88 @@
             }
         }
 
+        function parsePipeLine(text) {
+            const parts = (text || '')
+                .split('|')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+            if (parts.length < 4) return null;
+            return {
+                en: (parts[0] || '').trim(),
+                ipa: (parts[1] || '').trim(),
+                cn: (parts[2] || '').trim(),
+                pt: (parts[3] || '').trim(),
+                example: (parts[4] || '').trim()
+            };
+        }
+
+        function parseExcelRow(row) {
+            if (!row) return null;
+            const joined = row.map(v => (v ?? '').toString()).join(' ').trim();
+            if (joined.includes('|')) {
+                const parsed = parsePipeLine(joined);
+                if (parsed && parsed.en && parsed.cn && parsed.pt) return parsed;
+            }
+
+            const c0 = (row[0] ?? '').toString().trim();
+            const c1 = (row[1] ?? '').toString().trim();
+            const c2 = (row[2] ?? '').toString().trim();
+            const c3 = (row[3] ?? '').toString().trim();
+            const c4 = (row[4] ?? '').toString().trim();
+            const c5 = (row[5] ?? '').toString().trim();
+
+            const looksLikeIpa = s => /^[/\[]/.test((s || '').trim());
+            const looksLikeWord = s => /^[A-Za-z][A-Za-z'’\- ]{0,}$/.test((s || '').trim());
+
+            if (looksLikeWord(c0) && (looksLikeIpa(c1) || c1 === '') && c2 && c3) {
+                return { en: c0, ipa: c1, cn: c2, pt: c3, example: c4 };
+            }
+
+            if (c1 && c2 && c3) {
+                return { en: c1, ipa: c4, cn: c2, pt: c3, example: c5 };
+            }
+
+            return null;
+        }
+
+        function parseCsvLine(line) {
+            if (!line) return null;
+            if (line.includes('|')) {
+                const parsed = parsePipeLine(line);
+                if (parsed && parsed.en && parsed.cn && parsed.pt) return parsed;
+            }
+
+            const cols = line
+                .split(/,|\t/)
+                .map(item => item.trim().replace(/"/g, ''));
+            if (cols.length < 4) return null;
+
+            const looksLikeIpa = s => /^[/\[]/.test((s || '').trim());
+            const looksLikeWord = s => /^[A-Za-z][A-Za-z'’\- ]{0,}$/.test((s || '').trim());
+
+            if (looksLikeWord(cols[0]) && (looksLikeIpa(cols[1]) || (cols[1] || '').trim() === '') && cols[2] && cols[3]) {
+                return {
+                    en: (cols[0] || '').trim(),
+                    ipa: (cols[1] || '').trim(),
+                    cn: (cols[2] || '').trim(),
+                    pt: (cols[3] || '').trim(),
+                    example: (cols[4] || '').trim()
+                };
+            }
+
+            if (cols[1] && cols[2] && cols[3]) {
+                return {
+                    en: (cols[1] || '').trim(),
+                    ipa: (cols[4] || '').trim(),
+                    cn: (cols[2] || '').trim(),
+                    pt: (cols[3] || '').trim(),
+                    example: (cols[5] || '').trim()
+                };
+            }
+
+            return null;
+        }
+
         // 导入 CSV / Excel 文件（适配多列格式）
         function importFile() {
             const fileInput = document.getElementById("fileInput");
@@ -462,21 +582,21 @@
                         const newWords = [];
 
                         for (let row of rows) {
-                            if (!row || row.length < 4) continue; // 确保至少4列
-                            
-                            // 第二列=英文(row[1])、第三列=中文(row[2])、第四列=葡萄牙语(row[3])
-                            const en = (row[1] || '').toString().trim();
-                            const cn = (row[2] || '').toString().trim();
-                            const pt = (row[3] || '').toString().trim();
-                            
+                            const parsed = parseExcelRow(row);
+                            if (!parsed) continue;
+                            const en = (parsed.en || '').trim();
+                            const cn = (parsed.cn || '').trim();
+                            const pt = (parsed.pt || '').trim();
                             if (en && cn && pt) {
-                                newWords.push({ en, cn, pt, favorite: false });
+                                newWords.push({ en, ipa: (parsed.ipa || '').trim(), cn, pt, example: (parsed.example || '').trim(), favorite: false });
                             }
                         }
 
                         if (newWords.length > 0) {
                             wordList = newWords;
                             currentIndex = 0;
+                            viewedAllWords = new Set();
+                            viewedReviewWords = new Set();
                             updateReviewList();
                             renderCard();
                             alert(`Excel导入成功！共 ${newWords.length} 个单词`);
@@ -491,7 +611,7 @@
                 reader.readAsArrayBuffer(file);
             } 
             // 处理CSV文件
-            else if (fileExt === 'csv') {
+            else if (fileExt === 'csv' || fileExt === 'txt') {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     try {
@@ -501,16 +621,19 @@
 
                         for (let row of rows) {
                             if (!row.trim()) continue;
-                            
-                            // 支持逗号/制表符分隔，兼容Excel导出的CSV
-                            const cols = row.split(/[,|\t]/).map(item => item.trim().replace(/"/g, ''));
-                            // 第二列=英文(cols[1])、第三列=中文(cols[2])、第四列=葡萄牙语(cols[3])
-                            if (cols.length >= 4 && cols[1] && cols[2] && cols[3]) {
-                                newWords.push({ 
-                                    en: cols[1], 
-                                    cn: cols[2], 
-                                    pt: cols[3],
-                                    favorite: false 
+                            const parsed = parseCsvLine(row);
+                            if (!parsed) continue;
+                            const en = (parsed.en || '').trim();
+                            const cn = (parsed.cn || '').trim();
+                            const pt = (parsed.pt || '').trim();
+                            if (en && cn && pt) {
+                                newWords.push({
+                                    en,
+                                    ipa: (parsed.ipa || '').trim(),
+                                    cn,
+                                    pt,
+                                    example: (parsed.example || '').trim(),
+                                    favorite: false
                                 });
                             }
                         }
@@ -518,14 +641,16 @@
                         if (newWords.length > 0) {
                             wordList = newWords;
                             currentIndex = 0;
+                            viewedAllWords = new Set();
+                            viewedReviewWords = new Set();
                             updateReviewList();
                             renderCard();
-                            alert(`CSV导入成功！共 ${newWords.length} 个单词`);
+                            alert(`${fileExt.toUpperCase()}导入成功！共 ${newWords.length} 个单词`);
                         } else {
-                            alert("CSV文件中未识别到有效单词，请检查文件格式！\n要求：第二列=英文、第三列=中文、第四列=葡萄牙语");
+                            alert("文件中未识别到有效单词，请检查文件格式！\n要求：第二列=英文、第三列=中文、第四列=葡萄牙语");
                         }
                     } catch (err) {
-                        alert("CSV文件解析失败，请确保是标准 CSV 格式");
+                        alert("文件解析失败，请检查格式/编码（建议 UTF-8）");
                         console.error(err);
                     }
                 };
@@ -533,7 +658,7 @@
             } 
             // 不支持的文件类型
             else {
-                alert("不支持的文件格式！请选择.csv、.xlsx或.xls文件");
+                alert("不支持的文件格式！请选择.csv、.txt、.xlsx或.xls文件");
             }
         }
     </script>
